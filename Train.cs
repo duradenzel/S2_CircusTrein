@@ -7,13 +7,13 @@ using static CircusTrein.Animal;
 
 namespace CircusTrein
 {
-    public class AnimalPacker
+    public class Train
     {
 
         private List<Animal> animals;
         private List<Wagon> wagons;
 
-        public AnimalPacker(List<Animal> _animals)
+        public Train(List<Animal> _animals)
         {
             this.animals = _animals;
             wagons = new List<Wagon>();
@@ -21,23 +21,30 @@ namespace CircusTrein
 
         public void Pack()
         {
-            // Sort animals in descending order of weight
-            animals.Sort((a, b) => b.Weight.CompareTo(a.Weight));
 
-            // Distribute animals into wagons
+            //animals.Sort((a, b) => b.Weight.CompareTo(a.Weight));
+            animals.OrderBy(a => a.Type).ThenBy(a => a.Weight);
+            
             foreach (Animal animal in animals)
             {
-                bool added = false;
+                Wagon bestWagon = null;
+                int minSpace = int.MaxValue;
                 foreach (Wagon wagon in wagons)
                 {
                     if (wagon.RemainingCapacity >= animal.Weight && !Conflicts(animal, wagon))
                     {
-                        wagon.AddAnimal(animal);
-                        added = true;
-                        break;
+                        if (wagon.RemainingCapacity < minSpace)
+                        {
+                            bestWagon = wagon;
+                            minSpace = wagon.RemainingCapacity;
+                        }
                     }
                 }
-                if (!added)
+                if (bestWagon != null)
+                {
+                    bestWagon.AddAnimal(animal);
+                }
+                else
                 {
                     Wagon newWagon = new Wagon(10);
                     newWagon.AddAnimal(animal);
@@ -52,7 +59,7 @@ namespace CircusTrein
             {
                 foreach (Animal wagonAnimal in wagon.Animals)
                 {
-                    if (wagonAnimal.Type == "Carnivore" || wagonAnimal.Weight >= newAnimal.Weight)
+                    if (wagonAnimal.Type == "Carnivore" || wagonAnimal.Type == "Herbivore" && wagonAnimal.Weight <= newAnimal.Weight)
                     {
                         return true;
                     }
